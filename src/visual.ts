@@ -8,13 +8,10 @@ import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 import IVisual = powerbi.extensibility.visual.IVisual;
 import EnumerateVisualObjectInstancesOptions = powerbi.EnumerateVisualObjectInstancesOptions;
 import VisualObjectInstance = powerbi.VisualObjectInstance;
-import DataView = powerbi.DataView;
-import VisualObjectInstanceEnumerationObject = powerbi.VisualObjectInstanceEnumerationObject;
 import VisualObjectInstanceEnumeration = powerbi.VisualObjectInstanceEnumeration;
 import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
 
-import { VisualSettings } from "./settings";
 import * as d3 from "d3";
 
 interface DataPoint{
@@ -87,7 +84,6 @@ export class Visual implements IVisual {
         }
 
     public update(options: VisualUpdateOptions) {
-//debugger;
         this.updateSettings(options);
         let viewModel: ViewModel = this.getViewModel(options);
         viewModel = this.calculateMarginsOfColumns(viewModel);
@@ -101,12 +97,9 @@ export class Visual implements IVisual {
             width: width,
             height: height,
         });
-//debugger;
-        //let a = this.settings.axes.x.padding;
         let yScale = d3.scale.linear()
             .domain([0, viewModel.maxValue])
             .range([height - xAxisPadding, 0 + this.settings.border.top.value]);
-            // .range([0 + this.settings.border.top.value, height - xAxisPadding]);
 
         let xScale = d3.scale.ordinal()
             .domain(viewModel.dataPoints.map(d => d.category))
@@ -126,27 +119,20 @@ export class Visual implements IVisual {
         .call(yAxis)
         .attr({
             transform: "translate(" + this.settings.axis.y.padding.value + ",0)"
-            // ("transform","\"translate(0, " + (height - this.settings.axes.x.padding) + ")\"")
         })
         .style({
             fill: "#777777"
         })
         .selectAll("text")
-        // .attr({
-        //     transform: "rotate(-35)"
-        // })
         .style({
             "text-anchor": "end",
             "font-size": "x-small"
         });
         console.log('asdafasf ', yScale(viewModel.maxValue))
 
-        //xAxis(this.xAxisGroup);
         this.xAxisGroup
             .call(xAxis)
             .attr("transform", "translate(0, " + (height - xAxisPadding) + ")")
-            
-            //("transform","\"translate(0, " + (height - this.settings.axes.x.padding) + ")\"")
             
             .style({
                 fill: "#777777"
@@ -170,9 +156,7 @@ export class Visual implements IVisual {
             .attr("width", xScale.rangeBand())
             .attr("height", (d) => height - yScale(d.value) - xAxisPadding)
             .attr("y", d => {
-              console.log('scale', yScale(d.value));
               return yScale(d.value) - yScale(viewModel.maxValue - d.marginBottom)
-            //   return yScale(d.value)
             })
             .attr("x", d => xScale(d.category))
 
@@ -196,11 +180,8 @@ export class Visual implements IVisual {
     }
 
     private calculateMaxValue (viewModel: ViewModel): number {
-      // console.log(viewModel);
-      // console.log(this.settings);
       const maxValue = viewModel.dataPoints.reduce(
         (accum, currentValue) => {
-          // const { value } = currentValue;
           return accum + currentValue.value
         }, 0);
       console.log(maxValue);
@@ -208,29 +189,12 @@ export class Visual implements IVisual {
     };
 
     private calculateMarginsOfColumns(viewModel: ViewModel): ViewModel {
-      console.log('viewModel', viewModel)
-    //   debugger;
       const transformedViewModel = viewModel.dataPoints.reduce(
         (accum, currentValue, index, array) => {
-        //   const { value } = currentValue;
-        // let value: number, marginBottom: number;
-        // if (index !== 0) {
-        //     value = accum[accum.length-1].value;
-        //     marginBottom = accum[accum.length-1].marginBottom
-        //     // ({ value, marginBottom } = accum[accum.length]);
-        // } else {
-        //     value = 0;
-        //     marginBottom = 0;
-        // }
         let { value, marginBottom } = index !== 0 ? accum[accum.length-1] : { value: 0, marginBottom: 0 };
-        // const { value, marginBottom } =  { value: 0, marginBottom: 0 }
-        //   const acc = value + marginBottom;
-            //   const nextValue = value + prevValue;
           accum.push({
             ...currentValue,
-            // marginBottom: value + prevValue,
             marginBottom: value + marginBottom,
-            // value: 0,
           })
           return accum
         }, [],
@@ -258,7 +222,6 @@ export class Visual implements IVisual {
     }
 
     private getViewModel(options: VisualUpdateOptions): ViewModel {
-//debugger;
         let dv = options.dataViews;
         let viewModel: ViewModel = {
             dataPoints: [],
@@ -290,22 +253,15 @@ export class Visual implements IVisual {
                 highlighted: highlights ? highlights[i] ? true : false : false,
                 marginBottom: 0,
             });
-            //console.log(viewModel.dataPoints[i].identity)
         }
 
-        // viewModel.maxValue = d3.max(viewModel.dataPoints, d => d.value)
         viewModel.maxValue = this.calculateMaxValue(viewModel);
         console.log('dataPoints', viewModel.dataPoints);
         viewModel.highlights = viewModel.dataPoints.filter(d => d.highlighted).length > 0;
-        // viewModel.marginBottom = 0;
-//debugger;
-
         return viewModel;
     }
 
     public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
-        //const settings: VisualSettings = this.visualSettings || <VisualSettings>VisualSettings.getDefault();
-        //return VisualSettings.enumerateObjectInstances(settings, options);
         let propertyGroupName = options.objectName;
         let properties: VisualObjectInstance[] = [];
 
