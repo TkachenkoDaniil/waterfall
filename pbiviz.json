@@ -1,0 +1,27 @@
+{
+    "visual": {
+        "name": "mylittlebar",
+        "displayName": "mylittlebar",
+        "guid": "mylittlebar3C01E3B911FC4867B6E1639143C2F933",
+        "visualClassName": "Visual",
+        "version": "1.0.0",
+        "description": "",
+        "supportUrl": "",
+        "gitHubUrl": ""
+    },
+    "apiVersion": "2.6.0",
+    "author": {
+        "name": "",
+        "email": ""
+    },
+    "assets": {
+        "icon": "assets/icon.png"
+    },
+    "externalJS": [
+        "./node_modules/d3/d3.min.js"
+    ],
+    "style": "style/visual.less",
+    "capabilities": "capabilities.json",
+    "dependencies": null,
+    "stringResources": []
+}
