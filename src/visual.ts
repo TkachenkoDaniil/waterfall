@@ -32,12 +32,12 @@ interface ViewModel{
 export class Visual implements IVisual {
 
     private host: IVisualHost;
-    private svg: d3.Selection<SVGElement>;
-    private barGroup: d3.Selection<SVGElement>;
+    private svg: d3.Selection<SVGElement, any, any, any>;
+    private barGroup: d3.Selection<SVGElement, any, any, any>;
     private xPadding: number = 0.1;
     private selectionManager: ISelectionManager;
-    private xAxisGroup: d3.Selection<SVGElement>;
-    private yAxisGroup: d3.Selection<SVGElement>;
+    private xAxisGroup: d3.Selection<SVGElement, any, any, any>;
+    private yAxisGroup: d3.Selection<SVGElement, any, any, any>;
 
     private settings = {
         axis : {
@@ -93,54 +93,39 @@ export class Visual implements IVisual {
 
         let xAxisPadding = this.settings.axis.x.show.value ? this.settings.axis.x.padding.value : 0;
 
-        this.svg.attr({
-            width: width,
-            height: height,
-        });
-        let yScale = d3.scale.linear()
+        this.svg.attr('width', width)
+        this.svg.attr('height', height)
+
+        let yScale = d3.scaleLinear()
             .domain([0, viewModel.maxValue])
             .range([height - xAxisPadding, 0 + this.settings.border.top.value]);
 
-        let xScale = d3.scale.ordinal()
+        let xScale = d3.scaleBand()
             .domain(viewModel.dataPoints.map(d => d.category))
-            .rangeRoundBands([this.settings.axis.x.padding.value, width], this.xPadding);
+            .rangeRound([this.settings.axis.x.padding.value, width])
+            .padding(this.xPadding)
 
-        let xAxis = d3.svg.axis()
-            .scale(xScale)
-            .orient("bottom")
+        let xAxis = d3.axisBottom(xScale)
             .tickSize(1);
         
-        let yAxis = d3.svg.axis()
-            .scale(yScale)
-            .orient("left")
+        let yAxis = d3.axisLeft(yScale)
             .tickSize(0.5);
         
         this.yAxisGroup
         .call(yAxis)
-        .attr({
-            transform: "translate(" + this.settings.axis.y.padding.value + ",0)"
-        })
-        .style({
-            fill: "#777777"
-        })
+        .attr("transform", "translate(" + this.settings.axis.y.padding.value + ",0)")
+        .style('fill', "#777777")
         .selectAll("text")
-        .style({
-            "text-anchor": "end",
-            "font-size": "x-small"
-        });
-        console.log('asdafasf ', yScale(viewModel.maxValue))
+        .style("text-anchor", "end")
+        .style("font-size", "x-small")
 
         this.xAxisGroup
             .call(xAxis)
             .attr("transform", "translate(0, " + (height - xAxisPadding) + ")")
             
-            .style({
-                fill: "#777777"
-            })
+            .style('fill', "#777777")
             .selectAll("text")
-            .attr({
-                transform: "rotate(-35)"
-            })
+            .attr('transform', "rotate(-35)")
             .style("text-anchor", "end")
             .style("font-size", "x-small");
 
@@ -153,7 +138,7 @@ export class Visual implements IVisual {
             .classed("bar", true);
 
         bars
-            .attr("width", xScale.rangeBand())
+            .attr("width", xScale.bandwidth())
             .attr("height", (d) => height - yScale(d.value) - xAxisPadding)
             .attr("y", d => {
               return yScale(d.value) - yScale(viewModel.maxValue - d.marginBottom)
@@ -162,18 +147,6 @@ export class Visual implements IVisual {
 
             .style("fill", d => d.color)
             .style("fill-opacity", d => viewModel.highlights ? d.highlighted ? 1.0 : 0.5 : 1.0)
-
-            .on("click", d => {
-                this.selectionManager
-                    .select(d.identity, true)
-                    .then(ids => {
-                        bars.style({
-                            "fill-opacity": ids.length > 0 ? 
-                                d => ids.indexOf(d.identity) >= 0 ? 1.0 : 0.5
-                                : 1.0
-                        });
-                    });
-            });
 
         bars.exit()
             .remove();
@@ -184,13 +157,12 @@ export class Visual implements IVisual {
         (accum, currentValue) => {
           return accum + currentValue.value
         }, 0);
-      console.log(maxValue);
       return maxValue;
     };
 
     private calculateMarginsOfColumns(viewModel: ViewModel): ViewModel {
       const transformedViewModel = viewModel.dataPoints.reduce(
-        (accum, currentValue, index, array) => {
+        (accum, currentValue, index) => {
         let { value, marginBottom } = index !== 0 ? accum[accum.length-1] : { value: 0, marginBottom: 0 };
           accum.push({
             ...currentValue,
@@ -199,7 +171,6 @@ export class Visual implements IVisual {
           return accum
         }, [],
       );
-      console.log('transformedViewModel', transformedViewModel)
       viewModel.dataPoints = transformedViewModel;
       viewModel.maxValue = this.calculateMaxValue(viewModel);
       return viewModel;
@@ -256,7 +227,6 @@ export class Visual implements IVisual {
         }
 
         viewModel.maxValue = this.calculateMaxValue(viewModel);
-        console.log('dataPoints', viewModel.dataPoints);
         viewModel.highlights = viewModel.dataPoints.filter(d => d.highlighted).length > 0;
         return viewModel;
     }
