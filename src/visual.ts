@@ -161,20 +161,21 @@ export class Visual implements IVisual {
     };
 
     private calculateMarginsOfColumns(viewModel: ViewModel): ViewModel {
-      const transformedViewModel = viewModel.dataPoints.reduce(
-        (accum, currentValue, index) => {
-        let { value, marginBottom } = index !== 0 ? accum[accum.length-1] : { value: 0, marginBottom: 0 };
-          accum.push({
-            ...currentValue,
-            marginBottom: value + marginBottom,
-          })
-          return accum
-        }, [],
-      );
-      viewModel.dataPoints = transformedViewModel;
-      viewModel.maxValue = this.calculateMaxValue(viewModel);
-      return viewModel;
-    };
+        const transformedViewModel = viewModel.dataPoints.reduce(
+          (accum, currentValue, index, array) => {
+              let { value, marginBottom } = index !== 0
+                  ? accum[accum.length-1]
+                  : { value: 0, marginBottom: 0 };
+              accum.push({
+                  ...currentValue,
+                  marginBottom: index !== array.length - 1 ? value + marginBottom : 0,
+              })
+              return accum
+          }, [],
+        );
+        viewModel.dataPoints = transformedViewModel;
+        return viewModel;
+      };
 
     private updateSettings(option: VisualUpdateOptions) {
         let dv = option.dataViews;
@@ -213,7 +214,9 @@ export class Visual implements IVisual {
         let values = view.values[0];
         let highlights = values.highlights;
 
-        for (let i = 0, len = Math.max(categories.values.length, values.values.length); i < len; i++) {
+        const len = Math.max(categories.values.length, values.values.length)
+
+        for (let i = 0; i < len; i++) {
             viewModel.dataPoints.push({
                 category: <string>categories.values[i],
                 value: <number>values.values[i],
@@ -225,8 +228,18 @@ export class Visual implements IVisual {
                 marginBottom: 0,
             });
         }
-
         viewModel.maxValue = this.calculateMaxValue(viewModel);
+        const totalitem: DataPoint = {
+            category: 'total',
+            value: viewModel.maxValue,
+            color: '#d3d3d3',
+            identity: this.host.createSelectionIdBuilder()
+                .withCategory(categories, len)
+                .createSelectionId(),
+            highlighted: highlights ? highlights[len] ? true : false : false,
+            marginBottom: 0,
+        }
+        viewModel.dataPoints.push(totalitem);
         viewModel.highlights = viewModel.dataPoints.filter(d => d.highlighted).length > 0;
         return viewModel;
     }
