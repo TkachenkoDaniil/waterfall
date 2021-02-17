@@ -155,7 +155,7 @@ export class Visual implements IVisual {
 
         let barr = this.barGroup
             .selectAll(".barr")
-            .data(viewModel.dataPoints.slice(0, viewModel.dataPoints.length - 2))
+            .data(viewModel.dataPoints.slice(0, viewModel.dataPoints.length - 1))
         barr
             .enter()
             .append("rect")
