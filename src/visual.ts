@@ -13,6 +13,7 @@ import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
 
 import * as d3 from "d3";
+import { selectAll } from "d3";
 
 interface DataPoint{
     category: string;
@@ -35,6 +36,7 @@ export class Visual implements IVisual {
     private svg: d3.Selection<SVGElement, any, any, any>;
     private barGroup: d3.Selection<SVGElement, any, any, any>;
     private xPadding: number = 0.1;
+    private xPaddingr: number = 0.2;
     private selectionManager: ISelectionManager;
     private xAxisGroup: d3.Selection<SVGElement, any, any, any>;
     private yAxisGroup: d3.Selection<SVGElement, any, any, any>;
@@ -148,8 +150,33 @@ export class Visual implements IVisual {
             .style("fill", d => d.color)
             .style("fill-opacity", d => viewModel.highlights ? d.highlighted ? 1.0 : 0.5 : 1.0)
 
+            /////////////////////////////////////////////////////////
+
+        let xScaleLines = d3.scaleBand()
+            .domain(viewModel.dataPoints.map(d => d.category))
+            .rangeRound([this.settings.axis.x.padding.value, width])
+            .padding(0.06)
+
+        let barr = this.barGroup
+            .selectAll(".barr")
+            .data(viewModel.dataPoints.slice(0, viewModel.dataPoints.length - 2))
+        barr
+            .enter()
+            .append("rect")
+            .classed("barr", true);
+        barr
+            .attr("width", xScaleLines.bandwidth()*2)
+            .attr("height", "1px")
+            .attr("y", d => {
+                return yScale(d.value) - yScale(viewModel.maxValue - d.marginBottom)
+              })
+            .attr("x", d => xScale(d.category))
+            .style("fill", 'grey')
+
         bars.exit()
             .remove();
+        barr.exit()
+              .remove();
     }
 
     private calculateMaxValue (viewModel: ViewModel): number {
